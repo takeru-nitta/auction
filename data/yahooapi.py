@@ -1,7 +1,7 @@
 import urllib2
 import urllib
-import json
-import xml.etree.ElementTree
+#import json
+#import xml.etree.ElementTree
 
 class yahoo_api(object):
 
@@ -46,7 +46,7 @@ class api_goods(yahoo_api):
             }
 
 auction1=api_goods('h187497791')
-auction2=api_history('w101107767',1)
+#auction2=api_history('w101107767',1)
 res=auction1.get_response()
 #jobject=json.load(res)
 page=res.read()
