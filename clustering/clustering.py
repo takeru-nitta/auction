@@ -1,11 +1,15 @@
 #coding:utf-8
 import pandas as pd
 from pandas import DataFrame
-import numpy as np
 import MeCab
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.decomposition import TruncatedSVD
-from sklearn.cluster import KMeans
+from sklearn.cluster import KMeans, MiniBatchKMeans
+
+
+#解析の際に無視するストップワードの設定。ユニコードで指定。
+#☆とか■とか。
+stopwords = [u'\u3000', u'\u2606', u'\u2605', u'\u25c7', u'\u25c6', u'\u25cb', u'\u25cf', u'\u25a0', u'\u25a1']
 
 def analyzer(text):
     '''
@@ -25,20 +29,20 @@ class clustering:
     '''
     csv形式のデータを受け取って、'Title'についてクラスタリングを行う。
     'Title'を 'tf-idf'を用いた'bag of words'表現に変換、次元を削減したのち、
-    k最近防法によって指定した数のクラスに分ける。
+    k平均法によって指定した数のクラスに分ける。
     output()でラベル付けしたデータを、label_outputで指定したラベルのクラスに属するデータを返す。
     
     MAX_DF [0,1]　この値以上にたくさん出てくる単語は除く
     MAX_FEATURES 単語の種類
     LSA_DIM この数まで次元削減
     NUM_CLUSTERS 分けるクラスの数
-    MINIBATCH 0:普通のk最近傍法　1:mini-batch　データ数が大きい時はこっち
+    MINIBATCH 0:普通のk平均法　1:mini-batch　データ数が大きい時はこっち
     
     '''
     
     def __init__(self, filename,
-                 MAX_DF = 0.9, MAX_FEATURES = 300, LSA_DIM = 100,
-                 NUM_CLUSTERS = 30, MINIBATCH = 0):
+                 MAX_DF = 0.9, MAX_FEATURES = 500, LSA_DIM = 100,
+                 NUM_CLUSTERS = 10, MINIBATCH = 0):
         
         self.text_set, self.data = self.read_data(filename)
         self.X, self.lsa, self.vectorizer = self.to_vector(self.text_set, MAX_DF, MAX_FEATURES, LSA_DIM)
@@ -57,7 +61,7 @@ class clustering:
         bag of words に変換、次元削減    
         '''
         
-        vectorizer = TfidfVectorizer(analyzer=analyzer ,max_df=MAX_DF)
+        vectorizer = TfidfVectorizer(analyzer=analyzer ,max_df=MAX_DF, stop_words = stopwords)
         vectorizer.max_features = MAX_FEATURES
         X = vectorizer.fit_transform(text_set)
         lsa= TruncatedSVD(LSA_DIM)
@@ -67,28 +71,29 @@ class clustering:
         
     def clustering(self, X, NUM_CLUSTERS, MINIBATCH):
         '''
-        k最近傍法によってクラス分け
+        k平均法によってクラス分け
         '''
         
         if MINIBATCH:
-            km = MiniBatchkMeans(n_clusters = NUM_CLUSTERS,
+            km = MiniBatchKMeans(n_clusters = NUM_CLUSTERS,
                                  init='k-means++', batch_size=1000,
                                  n_init=10, max_no_improvement=10)
         else:
             km = KMeans(n_clusters=NUM_CLUSTERS, init='k-means++', n_init=1)
         
         km.fit(X)
-        '''
-        #もしかしたら使うかも
-        labels = km.labels_ #商品の属するクラス
         transformed = km.transform(X) #商品の各クラスの中心への距離
-        dists = np.zeros(labels.shape)
+        labels = km.labels_
+        
+        dists = []
         for i in range(len(labels)):
-            dists[i] = transformed[i, labels[i]] #商品の属するクラスの中心への距離
-        '''
-        labels = DataFrame(km.labels_)
+            dists.append(transformed[i, labels[i]]) #商品の属するクラスの中心への距離
+
+        labels = DataFrame(labels)
+        dists = DataFrame(dists)
         labels.columns = ['label']
-        self.data = pd.concat([labels, self.data], axis=1) #元のデータにラベルを加える
+        dists.columns = ['dists']
+        self.data = pd.concat([labels, dists, self.data], axis=1) #元のデータにラベルを加える
         
         return km
         
@@ -102,11 +107,22 @@ class clustering:
         '''
         新しいデータに対して、クラス推定を行う。クラスのラベルを返す。
         '''
-        text_set = self.read_data(new_filename)
-        X = self.vectorizer.transform(text_set)
+        text_set, data = self.read_data(new_filename)
+        X = self.vectorizer.transform(text_set, copy=True)
+        print X
         X = self.lsa.transform(X)
-        result = self.km.predict(X)
-        return result
+        labels_predict = self.km.predict(X)
+        print labels_predict
+        transformed= self.km.transform(X)
+        dists_predict = []
+        for i in range(len(labels_predict)):
+            dists_predict.append(transformed[i, labels_predict[i]])
+        
+        labels_predict = DataFrame(labels_predict)
+        labels_predict.columns = ['labels']
+        dists_predict = DataFrame(dists_predict)
+        dists_predict.columns = ['dists']
+        return pd.concat([labels_predict, dists_predict, data])
     
     
         

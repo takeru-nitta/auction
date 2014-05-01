@@ -9,11 +9,3 @@ if __name__ == '__main__':
     
     current = cl.clustering('sony.csv')
     current.output_csv()
-    
-    current.label_output(0).to_csv('output_0.csv')
-    current.label_output(1).to_csv('output_1.csv')
-    current.label_output(2).to_csv('output_2.csv')
-    current.label_output(3).to_csv('output_3.csv')
-    current.label_output(4).to_csv('output_4.csv')
-    
-
