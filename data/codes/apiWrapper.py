@@ -2,11 +2,12 @@
 # 
 import urllib2
 import urllib
+import re
 import pickle
 import xml.dom.minidom
 import json
 
-def auction_title(auctionIDlist,outstr,option='a'):
+def auction_title(auctionIDlist,outstr,option='a',discription=False):
     '''オークションのタイトルを取る関数
     入力はauctionIDlist：オークションIDのリスト　outstr：書き出すファイルの名前　option：書き出すのオプション、デフォルトは追加、新しいのを作りたい場合はwに
     タイトルだけではなく他のものを取り出したい場合はtitle = jobject[u'ResultSet'][u'Result'][u'Title']に適当に変形すればよい
@@ -23,7 +24,13 @@ def auction_title(auctionIDlist,outstr,option='a'):
         #jobject=json.load(aucres)
         try:
             title = jobject[u'ResultSet'][u'Result'][u'Title']
-            line=auctionIDlist[index] + " , " +title + "\n"
+            if discription == True:
+                Auc_disc = jobject[u'ResultSet'][u'Result'][u'Description']
+                temp = re.sub(r'<[^(?:<|>)]+>',' ', Auc_disc)
+                dst = re.sub(r' \t|\v|\r', ' ' , temp)
+                line=auctionIDlist[index] + " , " +title + " , "+ dst+"\n"
+            else:
+                line=auctionIDlist[index] + " , " +title + "\n"
             f2.write(line)
         except KeyError as e:
             print e
