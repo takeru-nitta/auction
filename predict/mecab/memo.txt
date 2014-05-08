@@ -1,0 +1,11 @@
+#analyzer‚ðˆÈ‰º‚É’u‚«Š·‚¦‚Ä‚­‚¾‚³‚¢
+
+def analyzer(text):
+    ret = []
+    tagger = MeCab.Tagger('-Ochasen')
+    node = tagger.parseToNode(text.encode('utf-8'))
+    while node:
+        if node.feature.split(',')[0] == u'–¼ŽŒ':
+            ret.append(node.surface)
+        node = node.next
+    return ret
