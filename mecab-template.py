@@ -11,12 +11,11 @@ def analyzer(text):
     ret = []
     tagger = MeCab.Tagger('-Ochasen')
     node = tagger.parseToNode(text.encode('utf-8'))
-    node = node.next
-    while node.next:
-        ret.append(node.feature.split(',')[-3].decode('utf-8'))
+    while node:
+        if node.feature.split(',')[0] == u'名詞':
+            ret.append(node.surface)
         node = node.next
     return ret
-
 
 
 def transform_data(filename,MAX_DF = 0.9, MAX_FEATURES = 500, LSA_DIM = 100):
