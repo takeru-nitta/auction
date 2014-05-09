@@ -70,16 +70,16 @@ def Auction_data_json(auctionIDlist,outstr,option='a'):
     if type(auctionIDlist) != list:
         auctionIDlist=[auctionIDlist]
 
-    f2=open(auctionIDlist,option)
+    ret = {'result': []}
     for index in xrange(len(auctionIDlist)):
-        print index
         aucres=api_goods(auctionIDlist[index],output='json').get_response()
         if aucres == None:
             continue
         page = aucres.read()
         jobject=json.loads(page[7:-1],encoding="cp932")
-    f2.close()
-    return json.dumps(jobject,indent=4,ensure_ascii=False)
+        ret['result'].append(jobject['ResultSet']['Result'])
+
+    return ret
 
 def search_auction_plus(catagoryID,startPage=1,pages=5,tagName='AuctionID'):
     '''中丸追記'''
