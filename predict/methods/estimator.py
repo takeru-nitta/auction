@@ -24,7 +24,7 @@ def analyzer(text):
     tagger = MeCab.Tagger('-Ochasen')
     node = tagger.parseToNode(text.encode('utf-8'))
     while node:
-        if node.feature.split(',')[0] == u'名詞':
+        if node.feature.split(',')[0] == u'名詞'.encode('utf-8'):
             ret.append(node.surface)
         node = node.next
     return ret

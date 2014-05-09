@@ -33,7 +33,7 @@ Noun.number.csv のアラビア数字0~9の行を全て削除
 
 した後に、適当なディレクトリに移動して
 
-mecab-dict-index ?d “C:\Program Files(x86)\MeCab\dic\ipadic”-f shift-jis -t utf-8
+mecab-dict-index -d “C:\Program Files(x86)\MeCab\dic\ipadic”-f shift-jis -t utf-8
 
 を実行(-f は辞書,ipadicにあるcsvの文字コード, -tは作りたい辞書の文字コード?)、できた4つのファイルをMeCab/dic/ipadic下に置けば、上のような設定にすることができると思われます
 
