@@ -67,7 +67,17 @@ def Auction_data_xml(auctionIDlist,outstr,option='a'):
                 f2.write(line)
             line=aucres.readline()
     f2.close()
+    
+    
+def Auction_data_json(auctionIDlist,outstr,option='a'):
+    '''オークションの詳細リストをファイルに書き出す関数：
+    入力はauctionIDlist：オークションIDのリスト　outstr：書き出すファイルの名前　option：書き出すのオプション、デフォルトは追加、新しいのを作りたい場合はwに
+    htmlタグなどがエラーになるため"Description"タグを削除した、ほかに"ResultSet"と'?xml'も削除
+    今はxmlにしたがデータベースなどを考えるとあとにjsonに変更する可能性ある'''
+    if type(auctionIDlist) != list:
+        auctionIDlist=[auctionIDlist]
 
+<<<<<<< HEAD
 def Auction_data_json(auctionIDlist,outstr,option='a'):
     '''オークションの詳細リストをファイルに書き出す関数：
     入力はauctionIDlist：オークションIDのリスト　outstr：書き出すファイルの名前　option：書き出すのオプション、デフォルトは追加、新しいのを作りたい場合はwに
@@ -86,6 +96,32 @@ def Auction_data_json(auctionIDlist,outstr,option='a'):
         jobject=json.loads(page[7:-1],encoding="cp932")
     f2.close()
     return json.dumps(jobject,indent=4,ensure_ascii=False)
+=======
+    f2=open(auctionIDlist,option)
+    for index in xrange(len(auctionIDlist)):
+        print index
+        aucres=api_goods(auctionIDlist[index],output='json').get_response()
+        if aucres == None:
+            continue
+        page = aucres.read()
+        jobject=json.loads(page[7:-1],encoding="cp932")
+    f2.close()
+    return json.dumps(jobject,indent=4,ensure_ascii=False)
+
+def search_auction_plus(catagoryID,startPage=1,pages=5,tagName='AuctionID'):
+    '''中丸追記'''
+    result=[]
+    for i in xrange(startPage,startPage+pages,1):
+        category1=api_search(catagoryID,page=i)
+        if category1==None:
+            break
+
+        res=category1.get_response()
+        doms = xml.dom.minidom.parse(res)
+        for dom in doms.getElementsByTagName(tagName):
+            result += [dom.childNodes[0].data]
+    return result
+>>>>>>> 28bd09630cc9d9bea305f122c66524abfb5aedbb
 
 def search_auction(catagoryID,pages=5,tagName='AuctionID'):
     '''特定のcatagoryIDの商品を検索し、そのcatagoryの商品の特定のフィルドを返す（デフォルト）はAuctionIDのリストを返す

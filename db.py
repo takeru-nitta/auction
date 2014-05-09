@@ -5,6 +5,15 @@ import MySQLdb
 
 
 # read
+def get_categories():
+    sql = "SELECT DISTINCT(category_id) FROM item"
+    ret = []
+    ctgs = query(sql)
+    for r in ctgs:
+        ret.append(r['category_id'])
+    return ret
+
+
 def get_ids(category, limit=10, offset=0):
     sql = "SELECT * FROM item WHERE category_id = '%s'" % (category)
     sql += " ORDER BY auction_id ASC LIMIT %d OFFSET %d" % (limit, offset)
