@@ -62,6 +62,19 @@ def Auction_data(auctionIDlist,outstr,option='a'):
     f2.close()
 
 
+def search_auction_plus(catagoryID,startPage=1,pages=5,tagName='AuctionID'):
+    '''中丸追記'''
+    result=[]
+    for i in xrange(startPage,startPage+pages,1):
+        category1=api_search(catagoryID,page=i)
+        if category1==None:
+            break
+
+        res=category1.get_response()
+        doms = xml.dom.minidom.parse(res)
+        for dom in doms.getElementsByTagName(tagName):
+            result += [dom.childNodes[0].data]
+    return result
 
 def search_auction(catagoryID,pages=5,tagName='AuctionID'):
     '''特定のcatagoryIDの商品を検索し、そのcatagoryの商品の特定のフィルドを返す（デフォルト）はAuctionIDのリストを返す
