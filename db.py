@@ -14,8 +14,9 @@ def get_categories():
     return ret
 
 
-def get_ids(category, limit=10, offset=0):
-    sql = "SELECT * FROM item WHERE category_id = '%s'" % (category)
+def get_ids(category, limit=10, offset=0, id_only=False):
+    field = 'auction_id' if id_only else '*'
+    sql = "SELECT %s FROM item WHERE category_id = '%s'" % (field ,category)
     sql += " ORDER BY auction_id ASC LIMIT %d OFFSET %d" % (limit, offset)
     return query(sql)
 
