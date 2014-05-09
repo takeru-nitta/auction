@@ -24,11 +24,15 @@ def auction_title(auctionIDlist,outstr,option='a',discription=False):
         #jobject=json.load(aucres)
         try:
             title = jobject[u'ResultSet'][u'Result'][u'Title']
+            title = re.sub(r' \t|\v|\r|,', ' ' , title)
             if discription == True:
                 Auc_disc = jobject[u'ResultSet'][u'Result'][u'Description']
                 temp = re.sub(r'<[^(?:<|>)]+>',' ', Auc_disc)
-                dst = re.sub(r' \t|\v|\r', ' ' , temp)
-                line=auctionIDlist[index] + " , " +title + " , "+ dst+"\n"
+                dst = re.sub(r' \t|\v|\r|,', ' ' , temp)
+                Initprice = jobject[u'ResultSet'][u'Result'][u'Initprice']
+                Price = jobject[u'ResultSet'][u'Result'][u'Price']
+                Bids = jobject[u'ResultSet'][u'Result'][u'Bids']
+                line=auctionIDlist[index] + " , " +title + " , "+ dst+ " , "+ Initprice+ " , "+ Price+ " , "+ Bids +"\n"
             else:
                 line=auctionIDlist[index] + " , " +title + "\n"
             f2.write(line)
@@ -38,7 +42,7 @@ def auction_title(auctionIDlist,outstr,option='a',discription=False):
 
 
 
-def Auction_data(auctionIDlist,outstr,option='a'):
+def Auction_data_xml(auctionIDlist,outstr,option='a'):
     '''オークションの詳細リストをファイルに書き出す関数：
 	入力はauctionIDlist：オークションIDのリスト　outstr：書き出すファイルの名前　option：書き出すのオプション、デフォルトは追加、新しいのを作りたい場合はwに
 	htmlタグなどがエラーになるため"Description"タグを削除した、ほかに"ResultSet"と'?xml'も削除
@@ -54,14 +58,34 @@ def Auction_data(auctionIDlist,outstr,option='a'):
             continue
         line=aucres.readline()
         while line != "":
-            if "ResultSet" in line or "Description" in line or '?xml' in line: 
+            if "ResultSet" in line or '?xml' in line: 
                 pass
+            elif "Description" in line:
+                temp = re.sub(r'<[^(?:<|>)]+>',' ', Auc_disc)
+                dst = re.sub(r' \t|\v|\r|,', ' ' , temp)
             else:
                 f2.write(line)
             line=aucres.readline()
     f2.close()
 
+def Auction_data_json(auctionIDlist,outstr,option='a'):
+    '''オークションの詳細リストをファイルに書き出す関数：
+    入力はauctionIDlist：オークションIDのリスト　outstr：書き出すファイルの名前　option：書き出すのオプション、デフォルトは追加、新しいのを作りたい場合はwに
+    htmlタグなどがエラーになるため"Description"タグを削除した、ほかに"ResultSet"と'?xml'も削除
+    今はxmlにしたがデータベースなどを考えるとあとにjsonに変更する可能性ある'''
+    if type(auctionIDlist) != list:
+        auctionIDlist=[auctionIDlist]
 
+    f2=open(auctionIDlist,option)
+    for index in xrange(len(auctionIDlist)):
+        print index
+        aucres=api_goods(auctionIDlist[index],output='json').get_response()
+        if aucres == None:
+            continue
+        page = aucres.read()
+        jobject=json.loads(page[7:-1],encoding="cp932")
+    f2.close()
+    return json.dumps(jobject,indent=4,ensure_ascii=False)
 
 def search_auction(catagoryID,pages=5,tagName='AuctionID'):
     '''特定のcatagoryIDの商品を検索し、そのcatagoryの商品の特定のフィルドを返す（デフォルト）はAuctionIDのリストを返す
@@ -78,6 +102,15 @@ def search_auction(catagoryID,pages=5,tagName='AuctionID'):
             result += [dom.childNodes[0].data]
     return result
 
+
+def createdisc(l):
+    dist={}
+    for id in l:
+        dist[id] = search_auction(id,pages=5,tagName='AuctionID')
+        print id 
+        print "success"
+    print 'success'
+    return dist
 
 
 
@@ -154,3 +187,18 @@ class api_search(yahoo_api):
             'sort' : 'bids',
             'order' : 'd'
             }
+
+class api_search(yahoo_api):
+    def __init__(self,categoryID,page=1,output='xml'):
+        self.url='http://auctions.yahooapis.jp/AuctionWebService/V2/categoryLeaf'
+        self.params={
+            'category':categoryID,
+            'appid':'dj0zaiZpPXlvZHVobmUxRmJoViZzPWNvbnN1bWVyc2VjcmV0Jng9ZDk-',
+            'output':output,
+            'page':page,
+            'ranking':'popular',
+            'sort' : 'bids',
+            'order' : 'd'
+            }
+
+
