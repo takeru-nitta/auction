@@ -4,6 +4,25 @@
 import MySQLdb
 
 
+# read
+def get_ids(category, limit=10, offset=0):
+    sql = "SELECT * FROM item WHERE category_id = '%s'" % (category)
+    sql += " ORDER BY auction_id ASC LIMIT %d OFFSET %d" % (limit, offset)
+    return query(sql)
+
+
+# write
+def insert_id(no, ctg):
+    sql = "INSERT INTO item (auction_id, category_id)"
+    sql += " VALUES ('%s', '%s')" % (str(no), str(ctg))
+    query(sql)
+
+
+def insert_ids(ls):
+    for no, ctg in ls:
+        insert_id(no, ctg)
+
+
 # run query
 def query(sql):
     connector = MySQLdb.connect(
