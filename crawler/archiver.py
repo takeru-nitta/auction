@@ -2,12 +2,24 @@
 import MySQLdb
 
 
-def add_items(ls):
-    ids = []
-    for e in ls:
-        ids.append("('%s')" % str(e))
-    q = "REPLACE INTO item(auction_id) VALUES %s" % ','.join(ids)
-    query(q)
+def add_item(e):
+    keys = []
+    vals = []
+
+    for k, v in e.items():
+        keys.append(k)
+        if v is None:
+            vals.append('NULL')
+        else:
+            vals.append(v)
+
+    q = "REPLACE INTO item(`%s`) VALUES ('%s')" % (
+        '`,`'.join(keys), "','".join(vals)
+    )
+    try:
+        query(q)
+    except:
+        print 'insert error @ %s' % e['auction_id']
 
 
 def update_item(info):

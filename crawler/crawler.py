@@ -1,6 +1,7 @@
 # coding:utf-8
 import urllib
 import json
+import re
 
 # appid
 appid = 'dj0zaiZpPXlvZHVobmUxRmJoViZzPWNvbnN1bWVyc2VjcmV0Jng9ZDk-'
@@ -22,18 +23,33 @@ def fetch_item(aid):
     item = obj['ResultSet']['Result']
 
     result = {}
-    result['auction_id'] = item['AuctionID']
-    result['category_id'] = item['CategoryID']
-    result['title'] = item['Title']
-    result['description'] = item['Description']
-    result['current_price'] = item['Price']
-    result['init_price'] = item['Initprice']
-    result['start_time'] = item['StartTime']
-    result['end_time'] = item['EndTime']
-    result['seller_point'] = item['Seller']['Rating']['Point']
-    result['bids'] = item['Bids']
-    result['condition'] = item['ItemStatus']['Condition']
+    result['auction_id'] = item['AuctionID'] if 'AuctionID' in item else None
+    result['category_id']\
+        = item['CategoryID'] if 'CategoryID' in item else None
+    result['title'] = item['Title'] if 'Title' in item else None
+
+    desc\
+        = item['Description'] if 'Description' in item else None
+    re.sub(r'<*?>', "", desc)
+    result['description'] = desc
+
+    result['current_price'] = item['Price'] if 'Price' in item else None
+    result['init_price'] = item['Initprice'] if 'Initprice' in item else None
+    result['start_time'] = item['StartTime'] if 'StartTime' in item else None
+    result['end_time'] = item['EndTime'] if 'EndTime' in item else None
+    result['bids'] = item['Bids'] if '' in item else None
     result['bid_or_buy'] = item['Bidorbuy'] if 'Bidorbuy' in item else None
+
+    result['condition'] = None
+    if 'ItemStatus' in item:
+        if 'Condition' in item['ItemStatus']:
+            result['condition'] = item['ItemStatus']['Condition']
+
+    result['seller_point'] = None
+    if 'Seller' in item:
+        if 'Rating' in item['Seller']:
+            if 'Point' in item['Seller']['Rating']:
+                result['seller_point'] = item['Seller']['Rating']['Point']
 
     return result
 
@@ -46,9 +62,14 @@ def fetch_item_list(ctg, page=1):
             'page': page
         }
     )
-    items = obj['ResultSet']['Result']['Item']
+    items = []
+    if 'ResultSet' in obj:
+        if 'Result' in obj['ResultSet']:
+            if 'Item' in obj['ResultSet']['Result']:
+                items = obj['ResultSet']['Result']['Item']
     ids = []
     for item in items:
-        ids.append(item['AuctionID'])
+        if isinstance(item, dict) and 'AuctionID' in item:
+            ids.append(item['AuctionID'])
 
     return ids
