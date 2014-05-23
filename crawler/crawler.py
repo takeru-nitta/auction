@@ -28,16 +28,16 @@ def fetch_item(aid):
         = item['CategoryID'] if 'CategoryID' in item else None
     result['title'] = item['Title'] if 'Title' in item else None
 
-    desc\
-        = item['Description'] if 'Description' in item else None
-    re.sub(r'<*?>', "", desc)
+    desc = item['Description'] if 'Description' in item else None
+    desc = re.sub('<[^<]+?>', '', desc)
+    desc = re.sub('\s', '', desc)
     result['description'] = desc
 
     result['current_price'] = item['Price'] if 'Price' in item else None
     result['init_price'] = item['Initprice'] if 'Initprice' in item else None
     result['start_time'] = item['StartTime'] if 'StartTime' in item else None
     result['end_time'] = item['EndTime'] if 'EndTime' in item else None
-    result['bids'] = item['Bids'] if '' in item else None
+    result['bids'] = item['Bids'] if 'Bids' in item else None
     result['bid_or_buy'] = item['Bidorbuy'] if 'Bidorbuy' in item else None
 
     result['condition'] = None
@@ -55,11 +55,15 @@ def fetch_item(aid):
 
 
 def fetch_item_list(ctg, page=1):
+    # http://auctions.yahooapis.jp/AuctionWebService/V2/json/search
     obj = yahoo_api(
+        #'/AuctionWebService/V2/json/search',
         '/AuctionWebService/V2/json/categoryLeaf',
         {
             'category': ctg,
-            'page': page
+            'page': page,
+            'sort': 'bids',
+            'order': 'a'
         }
     )
     items = []
