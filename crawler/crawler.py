@@ -12,7 +12,10 @@ def yahoo_api(path, params):
     for k, v in params.items():
         url += '&%s=%s' % (k, str(v))
     response = urllib.urlopen(url).read()
-    return json.loads(response[7:-1])
+    try:
+        return json.loads(response[7:-1])
+    except:
+        return {}
 
 
 def fetch_item(aid):
@@ -20,7 +23,11 @@ def fetch_item(aid):
         '/AuctionWebService/V2/json/auctionItem',
         {'auctionID': aid}
     )
-    item = obj['ResultSet']['Result']
+
+    item = {}
+    if 'ResultSet' in obj:
+        if 'Result' in obj['ResultSet']:
+            item = obj['ResultSet']['Result']
 
     result = {}
     result['auction_id'] = item['AuctionID'] if 'AuctionID' in item else None
@@ -31,6 +38,7 @@ def fetch_item(aid):
     desc = item['Description'] if 'Description' in item else None
     desc = re.sub('<[^<]+?>', '', desc)
     desc = re.sub('\s', '', desc)
+    desc = re.sub(',|\'', '', desc)
     result['description'] = desc
 
     result['current_price'] = item['Price'] if 'Price' in item else None
