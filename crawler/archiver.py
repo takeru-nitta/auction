@@ -36,6 +36,22 @@ def query(sql):
     )
     cursor = connector.cursor(MySQLdb.cursors.DictCursor)
     cursor.execute(sql)
+
+    result = cursor.fetchall()
+    res = []
+    for r in result:
+        res.append(dict(r))
+
     connector.commit()
     cursor.close()
     connector.close()
+
+    return result
+
+
+def get_ids(page=1):
+    ret = query('select auction_id from _item limit 10 offset %d' % (page*10))
+    vals = []
+    for d in ret:
+        vals.append(d['auction_id'])
+    return vals
