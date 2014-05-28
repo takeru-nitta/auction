@@ -282,6 +282,6 @@ class LinearRegression2(estimator):
         vector= np.hstack([vector, array])
         estimated = self.results.predict(vector)
         prstdn, infa, supa = wls_prediction_std(self.results, vector, alpha = ALPHA)
-        if supa[0] < 0:
-            supa[0] = 0
+        if infa[0] < 0:
+            infa[0] = 0
         return estimated[0]**2.0, supa[0]**2.0, infa[0]**2.0

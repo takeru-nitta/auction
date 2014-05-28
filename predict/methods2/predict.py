@@ -1,6 +1,6 @@
 import estimator
 import crawler 
-
+'''
 categoryIDdic = {
     'ASUS':[2084307163,2084307164,2084307165,2084307166,2084307167],
     
@@ -35,31 +35,49 @@ categoryIDdic = {
     'FUJITSU':[2084193603,2084193602,2084193601,2084193600,2084193599]
     
 }
+'''
+categoryIDdic = {
+                 'NEC':[2084193571,2084193570,2084193569,2084193568,2084193567],
+                 'SONY':[2084193581,2084193580,2084193579,2084193578,2084193577],
+                 'FUJITSU':[2084193603,2084193602,2084193601,2084193600,2084193599],
+                 'DELL':[2084193586,2084193585,2084193584,2084193583,2084193582],
+                 'TOSHIBA':[2084193594,2084193593,2084193592,2084193591,2084193590]
+                 }
+
+dic_LR = {}
+dic_KN = {}
 
 
 def search_maker(categoryID):
+    
     for maker in categoryIDdic:
         if categoryID in categoryIDdic[maker]:
             return maker
     return 1
 
-def LR_predict(ID):
+def update_LR():
+    
+    for maker in categoryIDdic:
+        dic_LR[maker] = estimator.LinearRegression2(maker, LSA_DIM=10)
+        dic_LR[maker].fit()
+        
+def update_KN():
+    
+    for maker in categoryIDdic:
+        dic_KN[maker] = estimator.KNeighbors(maker, LSA_DIM=10)
+        dic_KN[maker].fit()
+        
+
+def predict_LR(ID):
     
     testee = crawler.fetch_item(ID)
     maker = search_maker(int(testee['category_id']))
     if maker == 1: return 'Error'
+    return dic_LR[maker].predict(ID)
     
-    LR = estimator.LinearRegression2(maker)
-    LR.fit()
-    return LR.predict(ID)
-    
-def KN_predict(ID):
+def predict_KN(ID):
     
     testee = crawler.fetch_item(ID)
     maker = search_maker(int(testee['category_id']))
     if maker == 1: return 'Error'
-    
-    KN = estimator.KNeighbors(maker)
-    KN.fit()
-    return KN.predict(ID)
-    
+    return dic_KN[maker].predict(ID)
