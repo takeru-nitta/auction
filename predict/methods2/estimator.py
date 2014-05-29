@@ -40,7 +40,8 @@ def analyzer(text):
     node = tagger.parseToNode(text.encode('utf-8'))
     while node:
         if node.feature.split(',')[0] == u'名詞'.encode('utf-8'):
-            ret.append(node.surface)
+            if len(node.surface) > 1:
+                ret.append(node.surface)
         node = node.next
     return ret
 
@@ -50,7 +51,7 @@ def condition(text):
 
 class data_store:
     
-    def __init__(self, maker, MAX_DF=0.1, MAX_FEATURES=300, LSA_DIM=100, exclude_0=True):
+    def __init__(self, maker, MAX_DF=0.1, MAX_FEATURES=300, LSA_DIM=10, exclude_0=True):
         
         self.MAX_DF = MAX_DF
         self.MAX_FEATURES = MAX_FEATURES
@@ -67,8 +68,6 @@ class data_store:
         data['condition'] = data['condition'].apply(condition)
         data = data.astype(float)
         
-        #self.other =Normalizer(copy=False).fit_transform(data.values.T).T
-        #self.other = data
         self.title_list = []
         for i in self.data.index:
             self.title_list.append(self.data.ix[i, 'title']) 
@@ -90,16 +89,7 @@ class data_store:
         lsa.fit(tf)
         tf = lsa.transform(tf)
         return tf, vectorizer, lsa
-        
-    def add_data(self, filename):
-        
-        newdata = pd.read_csv(filename)
-        for i in newdata.index:
-            self.title_list.append(newdata.ix[i, 'Title'].decode('utf-8'))
-        self.data.append(newdata)
-        self.price = self.data['Price'].values
-        
-        self.tf, self.vectorizer, self.lsa = self.to_vector(self.title_list)
+    
     
     def output(self):
         return self.tf, self.data
@@ -107,29 +97,33 @@ class data_store:
     
 class estimator(data_store):
     
-    def __init__(self, maker, MAX_DF=0.1, MAX_FEATURES=300, LSA_DIM=100, exclude_0=True):
+    def __init__(self, maker, MAX_DF=0.1, MAX_FEATURES=300, LSA_DIM=10, exclude_0=True):
         
         data_store.__init__(self, maker, MAX_DF, MAX_FEATURES, LSA_DIM, exclude_0)
     
     def fit(self):
         
-        self.model.fit(self.tf, self.price)
+        self.model.fit(self.x, self.price)
         
-    def predict(self, testee):
+    def predict(self, ID): 
         
-        vector = self.vectorizer.transform([testee.decode('utf-8')])
+        list1 = get_data(ID)
+        vector = self.vectorizer.transform([list1[0].decode('utf-8')])
         vector = self.lsa.transform(vector)
-        estimated = self.model.predict(vector)
+        array = np.array([list1[1:4]])**2 / self.sum
+        array = array**0.5 
+        vector= np.hstack([vector, array])
         
+        estimated = self.model.predict(vector)
         return estimated
+        
     
     def cross_validation(self):
         
-        train_tf, test_tf, train_price, test_price = cross_validation.train_test_split(self.tf, self.price, test_size=0.1, random_state=0)
-        self.model.fit(train_tf, train_price)
+        train_x, test_x, train_price, test_price = cross_validation.train_test_split(self.x, self.price, test_size=0.1, random_state=0)
+        self.model.fit(train_x, train_price)
         
-        return self.model.score(test_tf, test_price)
-    
+        return self.model.score(test_x, test_price)
     
     
     
@@ -140,7 +134,7 @@ class estimator(data_store):
 
 class KNeighbors(estimator):
     
-    def __init__(self, maker, n_neighbors = 5, MAX_DF=0.1, MAX_FEATURES=300, LSA_DIM=100): #追加のパラメータがある場合はここに
+    def __init__(self, maker, n_neighbors = 3, MAX_DF=0.3, MAX_FEATURES=300, LSA_DIM=10): #追加のパラメータがある場合はここに
         
         estimator.__init__(self, maker, MAX_DF, MAX_FEATURES, LSA_DIM)
         self.model = neighbors.KNeighborsRegressor(n_neighbors, weights='distance')
@@ -157,15 +151,12 @@ class KNeighbors(estimator):
         estimated = self.model.predict(vector)
         dist, ind = self.model.kneighbors(vector) 
         simmilar = self.data.ix[self.data.index[ind.tolist()[0]]]
-        return estimated**2.0 , simmilar
-    
-    def fit(self):
-        self.model.fit(self.x, self.price)
+        return estimated[0]**2.0 , simmilar
     
     
 class SVR(estimator):
     
-    def __init__(self, maker, MAX_DF=0.1, MAX_FEATURES=300, LSA_DIM=100):
+    def __init__(self, maker, MAX_DF=0.1, MAX_FEATURES=300, LSA_DIM=10):
         
         estimator.__init__(self, maker, MAX_DF, MAX_FEATURES, LSA_DIM)
         self.model = svm.SVR()
@@ -173,99 +164,33 @@ class SVR(estimator):
         
 class LinearRegression(estimator):
     
-    def __init__(self, maker, MAX_DF=0.1, MAX_FEATURES=300, LSA_DIM=100):
+    def __init__(self, maker, MAX_DF=0.1, MAX_FEATURES=300, LSA_DIM=10):
         
         estimator.__init__(self, maker, MAX_DF, MAX_FEATURES, LSA_DIM)
         self.model = linear_model.LinearRegression()
         
-    def fit(self):
-        
-        self.model.fit(np.hstack([self.tf, self.other]).tolist(), self.price)
-        
-    def predict(self, ID):
-        list1 = get_data(ID)
-        vector = self.vectorizer.transform([list1[0].decode('utf-8')])
-        vector = self.lsa.transform(vector)
-        array = np.array([list1[1:4]])
-        vector= np.hstack([vector, array])
-        
-        estimated = self.model.predict(vector)
-        
-        return estimated
-    
-    def cross_validation(self):
-        
-        train_tf, test_tf, train_price, test_price = cross_validation.train_test_split(np.hstack([self.tf, self.other]).tolist(), self.price, test_size=0.1, random_state=0)
-        self.model.fit(train_tf, train_price)
-        
-        return self.model.score(test_tf, test_price)
-        
         
 class BayesianRidge(estimator):
     
-    def __init__(self, maker, MAX_DF=0.1, MAX_FEATURES=300, LSA_DIM=100):
+    def __init__(self, maker, MAX_DF=0.1, MAX_FEATURES=300, LSA_DIM=10):
         
         data_store.__init__(self, maker, MAX_DF, MAX_FEATURES, LSA_DIM)
         self.model = linear_model.BayesianRidge(normalize=True)
         
-    def fit(self):
-        
-        self.model.fit(np.hstack([self.tf, self.other]).tolist(), self.price)
-        
-    def predict(self, list1):
-        vector = self.vectorizer.transform([list1[0].decode('utf-8')])
-        vector = self.lsa.transform(vector)
-        array = np.array([list1[1:4]])
-        vector= np.hstack([vector, array])
-        
-        estimated = self.model.predict(vector)
-        
-        return estimated
-    
-    def cross_validation(self):
-        
-        train_tf, test_tf, train_price, test_price = cross_validation.train_test_split(np.hstack([self.tf, self.other]).tolist(), self.price, test_size=0.1, random_state=0)
-        self.model.fit(train_tf, train_price)
-        
-        return self.model.score(test_tf, test_price)
-    
-    
     
 class Lasso(estimator):
     
-    def __init__(self, maker, MAX_DF=0.1, MAX_FEATURES=300, LSA_DIM=100):
+    def __init__(self, maker, MAX_DF=0.1, MAX_FEATURES=300, LSA_DIM=10):
         
         data_store.__init__(self, maker, MAX_DF, MAX_FEATURES, LSA_DIM)
         self.model = linear_model.Lasso(alpha=0.5, normalize=True)
         
-    def fit(self):
-        
-        self.model.fit(np.hstack([self.tf, self.other]).tolist(), self.price)
-        
-    def predict(self, ID):
-        list1 = get_data(ID)
-        vector = self.vectorizer.transform([list1[0].decode('utf-8')])
-        vector = self.lsa.transform(vector)
-        array = np.array([list1[1:4]])
-        vector= np.hstack([vector, array])
-        
-        estimated = self.model.predict(vector)
-        
-        return estimated**2
-    
-    def cross_validation(self):
-        
-        train_tf, test_tf, train_price, test_price = cross_validation.train_test_split(np.hstack([self.tf, self.other]).tolist(), self.price, test_size=0.1, random_state=0)
-        self.model.fit(train_tf, train_price)
-        
-        return self.model.score(test_tf, test_price)
         
 class LinearRegression2(estimator):
     
-    def __init__(self, maker, MAX_DF=0.1, MAX_FEATURES=300, LSA_DIM=100, exclude_0=True):
+    def __init__(self, maker, MAX_DF=0.1, MAX_FEATURES=300, LSA_DIM=10, exclude_0=True):
         
         data_store.__init__(self, maker, MAX_DF, MAX_FEATURES, LSA_DIM, exclude_0)
-        #self.model = sm.OLS(self.price, sm.add_constant(np.hstack([self.tf, self.other]).tolist()))
         self.model = sm.OLS(self.price, self.x)
         
     def fit(self):
