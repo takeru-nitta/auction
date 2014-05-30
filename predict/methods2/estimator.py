@@ -31,7 +31,7 @@ def get_data(ID):
     if data['condition']== u'new':
         condition = 1.0
     else: condition = 0.0
-    data = [data['title'].encode('utf-8'), float(data['init_price'])**(0.5), float(data['seller_point']), condition]
+    data = [data['title'], float(data['init_price'])**(0.5), float(data['seller_point']), condition]
     return data
 
 def analyzer(text):
@@ -108,7 +108,7 @@ class estimator(data_store):
     def predict(self, ID): 
         
         list1 = get_data(ID)
-        vector = self.vectorizer.transform([list1[0].decode('utf-8')])
+        vector = self.vectorizer.transform([list1[0]])
         vector = self.lsa.transform(vector)
         array = np.array([list1[1:4]])**2 / self.sum
         array = array**0.5 
@@ -142,7 +142,7 @@ class KNeighbors(estimator):
     def predict(self, ID): #近くの商品も調べたいので、改めて定義
         
         list1 = get_data(ID)
-        vector = self.vectorizer.transform([list1[0].decode('utf-8')])
+        vector = self.vectorizer.transform([list1[0]])
         vector = self.lsa.transform(vector)
         array = np.array([list1[1:4]])**2 / self.sum
         array = array**0.5 
@@ -188,7 +188,7 @@ class Lasso(estimator):
         
 class LinearRegression2(estimator):
     
-    def __init__(self, maker, MAX_DF=0.1, MAX_FEATURES=300, LSA_DIM=10, exclude_0=True):
+    def __init__(self, maker, MAX_DF=0.3, MAX_FEATURES=300, LSA_DIM=10, exclude_0=True):
         
         data_store.__init__(self, maker, MAX_DF, MAX_FEATURES, LSA_DIM, exclude_0)
         self.model = sm.OLS(self.price, self.x)
@@ -200,7 +200,7 @@ class LinearRegression2(estimator):
                
     def predict(self, ID, ALPHA=0.4):
         list1 = get_data(ID)
-        vector = self.vectorizer.transform([list1[0].decode('utf-8')])
+        vector = self.vectorizer.transform([list1[0]])
         vector = self.lsa.transform(vector)
         array = np.array([list1[1:4]])**2.0 / self.sum
         array = array**0.5
