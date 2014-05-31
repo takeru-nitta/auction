@@ -2,7 +2,7 @@
 import MeCab
 import pandas as pd
 import gensim
-
+from get_data_DB import get_maker_data
 
 def get_words(contents):
     ret = []
@@ -40,13 +40,11 @@ def tokenlize(text):
 
 
 
-class make_lda(object):
-    """docstring for make_lda"""
+class lda_parts(object):
+    """docstring for lda_parts"""
     def __init__(self,sentencelist):
-        self.sentencelist = sentencelist
+        #self.sentencelist = sentencelist
         self.wordslist = get_words(sentencelist)
-        #self.dictionary_corpus()
-        #self.LDA_model
     def dictionary_corpus(self,filter = True,read = None ,save = None,show=False,no_below=3, no_above=0.6):
         if read == None:
             dictionary = gensim.corpora.Dictionary(self.wordslist)
@@ -86,12 +84,28 @@ class make_lda(object):
         self.matrix = gensim.similarities.MatrixSimilarity(self.lda[self.corpus])
 
 
-    def predict(self,sentence,threhold=0.8, interva=False):
-        p_words = tokenlize(sentence)
-        p_corpus = self.dictionary.doc2bow(p_words)
-        return self.matrix[self.lda[p_corpus]]
+
         
 
+
+class auction_LDA(object):
+    def __init__(self,maker,filters = True,show=False,no_below=5, no_above=0.75):
+        print "begin " + maker
+        data = get_maker_data(maker)
+        assert len(data) > 1, "cannot get data"
+        print "load data from" +maker
+
+        self.auctionID = data["auction_id"].values
+        self.price = data["current_price"].values
+
+        self.title_lda = lda_parts(data["title"].values)
+        self.title_lda.dictionary_corpus(filter=filters,show=show,no_below=no_below, no_above=no_above)
+        self.title_lda.LDA_model(load=("./model/"+maker+"_title.model"),show=show)
+        
+        self.description_lda = lda_parts(data["description"].values)
+        self.description_lda.dictionary_corpus(filter=filters,show=show,no_below=no_below, no_above=no_above)
+        self.description_lda.LDA_model(load=("./model/"+maker+"_description.model"),show=show)    
+        print "load model from" +maker
 
 
 
