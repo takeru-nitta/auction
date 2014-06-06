@@ -64,7 +64,7 @@ def update_LR():
 def update_KN():
     
     for maker in categoryIDdic:
-        dic_KN[maker] = estimator.KNeighbors(maker, LSA_DIM=10)
+        dic_KN[maker] = estimator.KNeighbors(maker, LSA_DIM=10, n_neighbors=10)
         dic_KN[maker].fit()
         
 
@@ -80,4 +80,7 @@ def predict_KN(ID):
     testee = crawler.fetch_item(ID)
     maker = search_maker(int(testee['category_id']))
     if maker == 1: return 'Error'
-    return dic_KN[maker].predict(ID)
+    result = return dic_KN[maker].predict(ID)
+    result[1].sort('current_price')
+    return [a[0], result.ix[7, 'current_price'], result.ix[3, 'current_price']]
+    
