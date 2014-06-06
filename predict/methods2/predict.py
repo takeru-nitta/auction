@@ -80,7 +80,7 @@ def predict_KN(ID):
     testee = crawler.fetch_item(ID)
     maker = search_maker(int(testee['category_id']))
     if maker == 1: return 'Error'
-    result = return dic_KN[maker].predict(ID)
+    result = dic_KN[maker].predict(ID)
     result[1].sort('current_price')
-    return [a[0], result.ix[7, 'current_price'], result.ix[3, 'current_price']]
+    return [result[0], result[1].ix[result[1].index[7], 'current_price'], result[1].ix[result[1].index[2], 'current_price']]
     
