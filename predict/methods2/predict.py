@@ -81,6 +81,6 @@ def predict_KN(ID):
     maker = search_maker(int(testee['category_id']))
     if maker == 1: return 'Error'
     result = dic_KN[maker].predict(ID)
-    result[1].sort('current_price')
-    return [result[0], result[1].ix[result[1].index[7], 'current_price'], result[1].ix[result[1].index[2], 'current_price']]
+    cu = result[1].sort('current_price')
+    return (result[0], cu.ix[cu.index[2], 'current_price'], cu.ix[cu.index[7], 'current_price'])
     

@@ -209,4 +209,4 @@ class LinearRegression2(estimator):
         prstdn, infa, supa = wls_prediction_std(self.results, vector, alpha = ALPHA)
         if infa[0] < 0:
             infa[0] = 0
-        return estimated[0]**2.0, supa[0]**2.0, infa[0]**2.0
+        return estimated[0]**2.0, infa[0]**2.0, supa[0]**2.0
