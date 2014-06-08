@@ -45,6 +45,7 @@ categoryIDdic = {
                  }
 
 dic_LR = {}
+dic_LR2 = {}
 dic_KN = {}
 
 
@@ -58,8 +59,14 @@ def search_maker(categoryID):
 def update_LR():
     
     for maker in categoryIDdic:
-        dic_LR[maker] = estimator.LinearRegression2(maker, LSA_DIM=10)
+        dic_LR[maker] = estimator.LinearRegression2(maker, LSA_DIM=30)
         dic_LR[maker].fit()
+        
+def update_LR2():
+    
+    for maker in categoryIDdic:
+        dic_LR2[maker] = estimator.LinearRegression3(maker, LSA_DIM=10)
+        dic_LR2[maker].fit()
         
 def update_KN():
     
@@ -74,6 +81,13 @@ def predict_LR(ID):
     maker = search_maker(int(testee['category_id']))
     if maker == 1: return 'Error'
     return dic_LR[maker].predict(ID)
+
+def predict_LR2(ID):
+    
+    testee = crawler.fetch_item(ID)
+    maker = search_maker(int(testee['category_id']))
+    if maker == 1: return 'Error'
+    return dic_LR2[maker].predict(ID)
     
 def predict_KN(ID):
     
@@ -83,4 +97,3 @@ def predict_KN(ID):
     result = dic_KN[maker].predict(ID)
     cu = result[1].sort('current_price')
     return (result[0], cu.ix[cu.index[2], 'current_price'], cu.ix[cu.index[7], 'current_price'])
-    
