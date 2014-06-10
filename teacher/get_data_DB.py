@@ -4,6 +4,27 @@
 import MySQLdb
 import pandas as pd
 
+makers=[]
+
+
+def get_all_data(makers):
+	maker_list=[]
+	for maker in makers:
+		try:
+			maker_list += categoryIDdic[maker]
+		except KeyError as e:
+			print maker, " not find"
+			print e
+			return None
+	category = "("+reduce(lambda a,b: str(a)+","+str(b), maker_list) +")"
+	field ='*'
+	sql = "SELECT %s FROM item WHERE category_id IN %s" % (field ,category)
+	#limit=10, offset=0
+	#sql += " ORDER BY auction_id ASC LIMIT %d OFFSET %d" % (limit, offset)
+	result = query(sql)
+	return pd.DataFrame(result)
+
+
 def get_maker_data(maker):
 	try:
 		IDlist = categoryIDdic[maker]
@@ -75,6 +96,15 @@ def query(sql):
     connector.close()
 
     return res
+
+
+
+def categoryIDtoMaker():
+	result = {}
+	for key in categoryIDdic:
+		for ids in categoryIDdic[key]:
+			result[ids] = key
+	return result
 
 
 

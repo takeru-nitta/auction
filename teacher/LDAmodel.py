@@ -2,7 +2,6 @@
 import MeCab
 import pandas as pd
 import gensim
-from get_data_DB import get_maker_data
 
 def get_words(contents):
     ret = []
@@ -38,6 +37,9 @@ def tokenlize(text):
     return keywords
 
 
+def FilterDate(data,date):
+    return data[data["end_time"] < date]
+
 
 
 class lda_parts(object):
@@ -45,7 +47,7 @@ class lda_parts(object):
     def __init__(self,sentencelist):
         #self.sentencelist = sentencelist
         self.wordslist = get_words(sentencelist)
-    def dictionary_corpus(self,filter = True,read = None ,save = None,show=False,no_below=3, no_above=0.6):
+    def dictionary_corpus(self,filter = True,read = None ,save = None,show=False,no_below=5, no_above=0.75):
         if read == None:
             dictionary = gensim.corpora.Dictionary(self.wordslist)
             if filter == True: 
@@ -67,7 +69,7 @@ class lda_parts(object):
         if show == True:
             print(self.dictionary.token2id)
 
-    def LDA_model(self,num_topics=100,save=None,load=None,show=False,set_matrix = True):
+    def LDA_model(self,num_topics=150,save=None,load=None,show=False,set_matrix = True):
         if load == None:
             self.lda = gensim.models.LdaModel(corpus=self.corpus, id2word=self.dictionary, num_topics=num_topics)    
             self.lda.save(save)
@@ -83,32 +85,67 @@ class lda_parts(object):
     def similarity_matrix(self):
         self.matrix = gensim.similarities.MatrixSimilarity(self.lda[self.corpus])
 
+    def similarity_vector(self,p_sentence):
+        p_corpus = self.dictionary.doc2bow(tokenlize(p_sentence))
+        return self.matrix[self.lda[p_corpus]]
 
 
-        
 
 
-class auction_LDA(object):
-    def __init__(self,maker,filters = True,show=False,no_below=5, no_above=0.75):
-        print "begin " + maker
-        data = get_maker_data(maker)
-        assert len(data) > 1, "cannot get data"
-        print "load data from" +maker
 
+class Auction(object):
+    def __init__(self,data,load_name,filters = True,show=False,no_below=5, no_above=0.75):
         self.auctionID = data["auction_id"].values
         self.price = data["current_price"].values
-
+        self.name = load_name
         self.title_lda = lda_parts(data["title"].values)
         self.title_lda.dictionary_corpus(filter=filters,show=show,no_below=no_below, no_above=no_above)
-        self.title_lda.LDA_model(load=("./model/"+maker+"_title.model"),show=show)
+        self.title_lda.LDA_model(load=("./model/"+load_name+"_title.model"),show=show)
         
         self.description_lda = lda_parts(data["description"].values)
         self.description_lda.dictionary_corpus(filter=filters,show=show,no_below=no_below, no_above=no_above)
-        self.description_lda.LDA_model(load=("./model/"+maker+"_description.model"),show=show)    
-        print "load model from" +maker
+        self.description_lda.LDA_model(load=("./model/"+load_name+"_description.model"),show=show)    
+        print "load model from" + load_name
+
+    def predict(self,p_title,p_description,threhold = 0.0,rate=2):
+        title_similarity = self.title_lda.similarity_vector(p_title)
+        description_similarity = self.description_lda.similarity_vector(p_description)
+
+        sim = [(n,(rate+1)*s1*s2/(s1+rate*s2)) for ((n,s1),s2) in zip(enumerate(title_similarity),description_similarity) if (s1 !=0 and s2 != 0)]
+        
+        #print sim
+
+        p_list = sorted([self.price[n] for (n,x) in sim if x > threhold ])
+        l=len(p_list)
+        
+        if l == 0:
+            return (0,0,0)
+        else:
+            return (p_list[l/2],p_list[l/4],p_list[l*3/4])
 
 
 
 
 
 
+        
+
+
+# class auction_LDA(object):
+#     def __init__(self,maker,filters = True,show=False,no_below=5, no_above=0.75):
+#         print "begin " + maker
+#         data = get_maker_data(maker)
+#         assert len(data) > 1, "cannot get data"
+#         print "load data from" +maker
+
+#         self.auctionID = data["auction_id"].values
+#         self.price = data["current_price"].values
+
+#         self.title_lda = lda_parts(data["title"].values)
+#         self.title_lda.dictionary_corpus(filter=filters,show=show,no_below=no_below, no_above=no_above)
+#         self.title_lda.LDA_model(load=("./model/"+maker+"_title.model"),show=show)
+        
+#         self.description_lda = lda_parts(data["description"].values)
+#         self.description_lda.dictionary_corpus(filter=filters,show=show,no_below=no_below, no_above=no_above)
+#         self.description_lda.LDA_model(load=("./model/"+maker+"_description.model"),show=show)    
+#         print "load model from" +maker
