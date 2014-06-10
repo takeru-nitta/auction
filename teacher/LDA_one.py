@@ -59,6 +59,6 @@ class LDA_one(object):
 
 if __name__ == '__main__':
 	maker_list=['NEC','SONY','FUJITSU','DELL','TOSHIBA']
-	#LDA_initial_all(maker_list)
-	PredictOne = LDA_one(maker_list)
+	LDA_initial_all(maker_list)
+	#PredictOne = LDA_one(maker_list)
 
