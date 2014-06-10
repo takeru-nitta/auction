@@ -15,12 +15,18 @@ def LDA_initial(maker,date="2014-6-7 23:59:59",filters = True,show=False,no_belo
 
 	title_lda = lda_parts(data_title)
 	title_lda.dictionary_corpus(filter=filters,show=show,no_below=no_below, no_above=no_above)
+
+	#need to change
 	title_lda.LDA_model(num_topics=num_topics,save=("./model/"+maker+"_title.model"),show=show,set_matrix=False)
 	print "titile's model of "+maker +" made"
 
+
 	description_lda = lda_parts(data_description)
 	description_lda.dictionary_corpus(filter=filters,show=show,no_below=no_below, no_above=no_above)
-	description_lda.LDA_model(num_topics=num_topics,save=("./model/"+maker+"_description.model"),show=show,set_matrix=False)      
+
+	#need to change
+	description_lda.LDA_model(num_topics=num_topics,save=("./model/"+maker+"_description.model"),show=show,set_matrix=False)
+	      
 	print "description's model of "+maker +" made"
 
 
