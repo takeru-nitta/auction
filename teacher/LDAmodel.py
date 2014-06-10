@@ -100,12 +100,17 @@ class Auction(object):
         self.name = load_name
         self.title_lda = lda_parts(data["title"].values)
         self.title_lda.dictionary_corpus(filter=filters,show=show,no_below=no_below, no_above=no_above)
+
+        #need to change
         self.title_lda.LDA_model(load=("./model/"+load_name+"_title.model"),show=show)
         
         self.description_lda = lda_parts(data["description"].values)
         self.description_lda.dictionary_corpus(filter=filters,show=show,no_below=no_below, no_above=no_above)
+
+        #need to change
         self.description_lda.LDA_model(load=("./model/"+load_name+"_description.model"),show=show)    
         print "load model from" + load_name
+        
 
     def predict(self,p_title,p_description,threhold = 0.0,rate=2):
         title_similarity = self.title_lda.similarity_vector(p_title)
