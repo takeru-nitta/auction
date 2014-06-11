@@ -95,7 +95,7 @@ class data_store:
         if exclude_0:
             self.data = self.data[self.data['bids']>0]
             
-        self.data = self.data[self.data['end_time'] < datetime.datetime(2014, 5, 30, 14, 0)]
+        self.data = self.data[self.data['end_time'] < datetime.datetime(2014, 6, 7, 23, 59)]
         self.price = map((lambda x: x**(0.5)),  self.data['current_price'].values)
         data = self.data[['init_price', 'seller_point', 'condition']]
         data['init_price'] = data['init_price'].apply(lambda x: x**(0.5))
