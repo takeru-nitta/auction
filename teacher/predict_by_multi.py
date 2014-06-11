@@ -15,8 +15,6 @@ predict.update_KN()
 
 
 
-PredictQuadratic =
-
 
 def predict_by_all(auction_id):
 	LR1 = predict.predict_LR(auction_id)
