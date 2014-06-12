@@ -71,7 +71,7 @@ def update_LR2():
 def update_KN():
     
     for maker in categoryIDdic:
-        dic_KN[maker] = estimator.KNeighbors(maker, LSA_DIM=10, n_neighbors=10)
+        dic_KN[maker] = estimator.KNeighbors(maker, LSA_DIM=30, n_neighbors=3)
         dic_KN[maker].fit()
         
 
@@ -96,4 +96,4 @@ def predict_KN(ID):
     if maker == 1: return 'Error'
     result = dic_KN[maker].predict(ID)
     cu = result[1].sort('current_price')
-    return (result[0], cu.ix[cu.index[2], 'current_price'], cu.ix[cu.index[7], 'current_price'])
+    return (result[0], cu.ix[cu.index[0], 'current_price'], cu.ix[cu.index[-1], 'current_price'])
